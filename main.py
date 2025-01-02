@@ -5,7 +5,7 @@ from db import fetch_data, insert_mapping, update_mapping, delete_mapping, is_du
 st.set_page_config(page_title="Data Mapping", layout="wide")
 st.title("Data Mapping Tool")
 
-tab1, tab2, tab3, tab4 = st.tabs(["Create", "Read", "Update", "Delete"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Create", "Read", "Update", "Delete", "Import CSV"])
 
 KEY_FIELDS = ["malcode", "schema_name", "table_name", "field_name", "target_table_name", "target_field_name"]
 
@@ -58,7 +58,6 @@ with tab1:
                     insert_mapping(new_record)
                     st.success("Record added successfully.")
     else:
-
         st.write("### Enter Data Below")
 
         template_data = pd.DataFrame(columns=[
@@ -151,3 +150,25 @@ with tab4:
         if st.button("Delete Record"):
             delete_mapping(record_id)
             st.success("Record deleted successfully.")
+
+with tab5:
+    st.header("Import Data from CSV")
+
+    uploaded_file = st.file_uploader("Upload a CSV file", type="csv")
+
+    if uploaded_file:
+        try:
+            csv_data = pd.read_csv(uploaded_file)
+            st.write("### Preview of Uploaded Data")
+            st.dataframe(csv_data)
+
+            if st.button("Import Data"):
+                for _, row in csv_data.iterrows():
+                    new_record = row.to_dict()
+                    if is_duplicate(new_record):
+                        st.warning(f"Duplicate record skipped: {new_record}")
+                    else:
+                        insert_mapping(new_record)
+                st.success("CSV data imported successfully!")
+        except Exception as e:
+            st.error(f"Error processing the uploaded file: {e}")
